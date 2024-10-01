@@ -1,0 +1,765 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="../../../../img/fluid.png">
+  <link rel="icon" href="../../../../img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="John Doe">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Vision Transformer 1 目的与来源 本科学习期间，参加了一些机器人比赛，主要负责的视觉部分。在比赛结束后，我继续沿着视觉方向，学习了Vision Transformer(ViT)，只看论文总有些隔靴搔痒，不得精髓。于是就有了这篇学习笔记。代码来源于vit-pytorch。下面将先分析ViT的总体思路，再深入代码进行学习。Transformer论文,ViT论文 2 网络设计">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vision Transformer学习笔记">
+<meta property="og:url" content="http://example.com/2024/10/01/Transformer%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="Vision Transformer 1 目的与来源 本科学习期间，参加了一些机器人比赛，主要负责的视觉部分。在比赛结束后，我继续沿着视觉方向，学习了Vision Transformer(ViT)，只看论文总有些隔靴搔痒，不得精髓。于是就有了这篇学习笔记。代码来源于vit-pytorch。下面将先分析ViT的总体思路，再深入代码进行学习。Transformer论文,ViT论文 2 网络设计">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2024/10/01/Transformer%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/Transformer_model.png">
+<meta property="article:published_time" content="2024-10-01T11:54:45.000Z">
+<meta property="article:modified_time" content="2024-10-01T14:21:38.248Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="原创">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/2024/10/01/Transformer%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/Transformer_model.png">
+  
+  
+  
+  <title>Vision Transformer学习笔记 - Hexo</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="../../../../css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="../../../../css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="../../../../css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="../../../../js/utils.js" ></script>
+  <script  src="../../../../js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="../../../../index.html">
+      <strong>Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="../../../../index.html" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="../../../../archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="../../../../categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="../../../../tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="../../../../about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('../../../../img/sakuramiku.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Vision Transformer学习笔记"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-10-01 19:54" pubdate>
+          2024年10月1日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          19 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Vision Transformer学习笔记</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="vision-transformer">Vision Transformer</h1>
+<h2 id="目的与来源">1 目的与来源</h2>
+<p>本科学习期间，参加了一些机器人比赛，主要负责的视觉部分。在比赛结束后，我继续沿着视觉方向，学习了Vision
+Transformer(ViT)，只看论文总有些隔靴搔痒，不得精髓。于是就有了这篇学习笔记。代码来源于<a
+target="_blank" rel="noopener" href="https://github.com/lucidrains/vit-pytorch/blob/main/vit_pytorch/vit.py">vit-pytorch</a>。下面将先分析ViT的总体思路，再深入代码进行学习。<a
+target="_blank" rel="noopener" href="https://user.phil.hhu.de/~cwurm/wp-content/uploads/2020/01/7181-attention-is-all-you-need.pdf">Transformer论文</a>,<a
+target="_blank" rel="noopener" href="https://arxiv.org/pdf/2010.11929">ViT论文</a></p>
+<h2 id="网络设计思路">2 网络设计思路</h2>
+<p>ViT的思路来源于Transformer架构，Transformer由2017年Google团队提出，该文原本为自然语言处理领域的成果，后来在深度学习的众多领域都表现出了卓越的能力，如今的火热的大语言模型(如GPT等)基本均以其为基础。</p>
+<p>Transformer原本的结构分为encoder(下图左侧)与decoder(下图右侧)两个部分，而ViT将其迁移至视觉领域，仅保留了encoder部分，删除了decoder，结构其实是简单了很多。可以看到encoder主要由Input
+Embedding(词嵌入)，Positional Encoding(位置嵌入)，Multi-Head
+Attention(多头注意力模型)，Add &amp; Norm(残差相加与归一化)，Feed
+Forward(前馈层)构成。decoder部分相较于encoder仅仅是多了Masker Multi-Head
+Attention(带掩膜的多头注意力模块)和末尾的Linear与Softmax。这些模块在后续的代码分析中都会详细讲解。
+<img src="Transformer_model.png" srcset="/img/loading.gif" lazyload alt="Transformer结构图" /></p>
+<p>原本的Transformer处理的文本是序列化的信息(文字存在前后顺序且不可随意变动)，而且将文字嵌入为词向量(将文本编码为网络可处理的向量，一般为一维向量)。如果将一张224x224大小的图像存储在一个一维向量中，这个向量的维度会过于庞大，网络难以处理，所以作者首先将一张图像切成很多的patch，每个patch很小，一般为16x16。例如一张224x224的图像就可以分割为196个16x16的patch。将每个patch拉伸为一个向量，网络是完全可以处理的。在上述例子中，我们就可以得到196个序列向量，再为每个向量添加位置嵌入(告诉网络每个patch的相对位置关系)，送入到ViT中即可。由于ViT被提出时是用于图像分类任务，所以作者在Transfomer
+encoder的末尾处添加了线性层用于最后的分类任务。 ## 3 代码分析</p>
+<p>代码由4个类和1个函数构成，4个类层层嵌套，实现全过程：<code>class ViT, class Transformer, class Attention, class FeedForward</code>.
+一个函数为<code>pair(t)</code>，用于判断参数t是否为元组，是，则不变；否则返回<code>(t, t)</code>。下面从最外层类开始逐渐深入分析。</p>
+<h4 id="vit类">ViT类</h4>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self,*, image_size, patch_size,num_classes, dim,depth, heads, mlp_dim, pool= <span class="hljs-string">&#x27;cls&#x27;</span>, channels= <span class="hljs-number">3</span> ,dim_head = <span class="hljs-number">64</span> , dropout= <span class="hljs-number">0.</span>, emb_dropout =<span class="hljs-number">0.</span></span>):<br></code></pre></td></tr></table></figure>
+<p>首先在init函数中进行相关的参数初始化。image_size是输入图像大小，patch_size是每个patch的大小，num_classes为分类的种类数，dim参数是一个将patch的维度进行线性映射后的维度。depth是多少个注意力块与前馈网络，heads为被切成大块的q,k,v再被分为多少个小块(头)，mlp_dim是前馈网络中的中间隐藏层维度，pool为程序最后的池化方式（只接受cls与mean两种方式），channels输入图像的通道数，dim_head每个头的维度（与heads配套使用），dropout是transformer块中的参数（同时用在了Attention和FeedForward里），emb_dropout，embedding结束后dropout的参数，dropout主要用于减轻网络过拟合问题。上述参数没有理解也没有关系，后续还会多次出现。
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">num_patches=(image_height// patch_height)*(image_width//,patch_width)<br>patch_dim= channels*patch_height* patch_width<br></code></pre></td></tr></table></figure>
+这里根据参数计算出一共num_patches个patch，每个patch的维度为patch_dim。下面正式进入前向传播。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">x = <span class="hljs-variable language_">self</span>.to_patch_embedding(img)<br></code></pre></td></tr></table></figure>
+<p>首先将输入图像送入to_patch_embedding，to_patch_embedding定义如下：
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-variable language_">self</span>.to_patch_embedding= nn.Sequential(<br>  Rearrange(<span class="hljs-string">&#x27;b c (h p1) (w p2) -&gt; b (h w) (p1 p2 c)&#x27;</span>, p1 = patch_height, p2=patch_width),<br>  nn.LayerNorm(patch_dim),<br>  nn.Linear(patch_dim, dim),<br>  nn.LayerNorm(dim),<br>  )<br></code></pre></td></tr></table></figure> 不难看到，这里实际是将形如[batch_size, channels, height,
+width]的4维输入张量图像reshape为形如[batch_size, h*w,
+patch_height*patch_width*channels]的3维张量，注：patch_dim =
+patch_height * patch_width *
+channels。再在最后一个维度进行LayerNorm层归一化，映射到dim维，再LayerNorm，成为形如[batch_size,
+h*w,
+dim]的张量。这里也不难看出，h与w分别为原图像每一列与每一行的patch个数，所以num_patches
+= h * w。 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">b, n, _ = x.shape<br>cls_tokens= repeat(<span class="hljs-variable language_">self</span>.cls_token,<span class="hljs-string">&#x27;1 1 d -&gt; b 1 d&#x27;</span>, b=b)<br>x= torch.cat((cls_tokens, x), dim= <span class="hljs-number">1</span> )<br>x+= <span class="hljs-variable language_">self</span>.pos_embedding[:, :(n+ <span class="hljs-number">1</span> )]<br>x= <span class="hljs-variable language_">self</span>.dropout(x)<br></code></pre></td></tr></table></figure>
+x.shape获取大小不再赘述，随后对self.cls_token进行了repeat，初始化中定义<code>self.cls_token = nn.Parameter(torch.randn(1,1, dim))</code>，说明self.cls_token就是一个可训练的随机张量。repeat函数将这个张量重复b次，形成了[batch_size,
+1, dim]的张量。紧接着，使用cat函数在第
+1个维度（num_patches）进行了拼接，形成了[batch_size, num_patches+1,
+dim]的张量。cls_token原本是代表最终类别的标签，但在实践中发现cls_token可以被每个类的概率直接替代。所以目前我认为，这个参数可有可无.....</p>
+<p>第四行进入到位置嵌入，定义了<code>self.pos_embedding = nn.Parameter(torch.randn(1,num_patches + 1, dim))</code>，它初始化了一个和添加了cls_token后张量的后两个维度相同的位置嵌入，按照Transformer论文，应当是正余弦方式进行嵌入，即
+<span class="math display">\[
+PE(pos,2i)=\sin(\frac{pos}{10000^{\frac{2i}{d_{model}}}})
+\]</span> <span class="math display">\[
+PE(pos,2i+1)=\cos(\frac{pos}{10000^{\frac{2i}{d_{model}}}})
+\]</span>
+但这里的初始化，将其设计成了可以训练的参数，与原文不太一样，我们认为网络可以通过参数学习到每个patch之间的相对位置关系。总之，这里将位置嵌入加上来。随后紧接着dropout，这里使用的是emb_dropout，防止过拟合。下面进入到transformer类中，注意，此时的张量形状为[batch_size,
+patch_num+1, dim]，这是一个贯穿ViT模型始终的重要张量形状。 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">x = <span class="hljs-variable language_">self</span>.transformer(x)<br></code></pre></td></tr></table></figure>
+这一步，进入transformer类</p>
+<h4 id="transformer类">Transformer类</h4>
+<p>Transfomer类的前向传播： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> attn, ff <span class="hljs-keyword">in</span> <span class="hljs-variable language_">self</span>.layers:<br>    x= attn(x)+ x<br>    x= ff(x)+x<br><span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.norm(x)<br></code></pre></td></tr></table></figure>
+这个结构比较简单，attn就是注意力块，ff是前馈网络，norm在dim大小的维度(最后一维)进行归一化，可以看到self.layers的定义
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(depth):<br>    <span class="hljs-variable language_">self</span>.layers.append(nn.ModuleList([<br>    Attention(dim, heads= heads, dim_head =dim_head,dropout= dropout),<br>    FeedForward(dim, mlp_dim, dropout= dropout)<br>    ]))<br></code></pre></td></tr></table></figure>
+这里可以看到，att由Attention类构建，ff由FeedForward构建，一共重复depth次，可以理解为将Transformer的encoder部分重复depth次。</p>
+<h4 id="attention类">Attention类</h4>
+<p>这是Transformer最核心最重要的部分。我们一步一步分析Attention块的前向传播：
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">x= <span class="hljs-variable language_">self</span>.norm(x)<br>qkv=<span class="hljs-variable language_">self</span>.to_qkv(x).chunk( <span class="hljs-number">3</span> , dim =- <span class="hljs-number">1</span> )<br>q, k, v=<span class="hljs-built_in">map</span>(<span class="hljs-keyword">lambda</span> t: rearrange(t,<span class="hljs-string">&#x27;b n (h d) -&gt; b h n d&#x27;</span>, h=<span class="hljs-variable language_">self</span>.heads), qkv)<br></code></pre></td></tr></table></figure>
+首先在最后一个维度进行self.norm(LayerNorm)，然后self.to_qkv(x).chunk(3,
+dim =
+-1)这一步，self.to_qkv本质是一个线性层，将张量最后一个维度从dim维映射到dim_head
+* heads * 3。在最后一个维度进行切分，将1个形如[batch_size, patch_num+1,
+dim_head * heads * 3]的张量切分为3个[batch_size, patch_num+1, dim_head *
+heads]张量，形成元组(q, k, v)，分别为query, key,
+value。通过map将每个[batch_size, patch_num+1, dim_head *
+heads]张量reshape为形如[batch_size, heads, patch_num+1,
+dim_head]的张量，形成了真正用于运算的q, k, v向量。 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">dots=torch.matmul(q, k.transpose(- <span class="hljs-number">1</span> , - <span class="hljs-number">2</span> )) *<span class="hljs-variable language_">self</span>.scale<br>attn=<span class="hljs-variable language_">self</span>.attend(dots)<br>attn=<span class="hljs-variable language_">self</span>.dropout(attn)<br>out=torch.matmul(attn, v)<br>out=rearrange(out, <span class="hljs-string">&#x27;b h n d -&gt; b n (h d)&#x27;</span>)<br></code></pre></td></tr></table></figure>
+这里使用matmual函数在q,
+k的最后两个维度进行点积。self.scale参数是dim_head **
+-0.5。self.attend是在最后一个维度进行softmax，self.scale缩放的目的是为了使softmax的计算结果更加具有区分度，而不是结果集中在1与0附近。dropout后再与v进行点乘，点乘后重排为[batch_size,
+num_patches+1, heads*num_head]。</p>
+<p>具体而言，这一部分的计算公式为： <span class="math display">\[
+Attention(q, k, v)=softmax(\frac{qk^T}{\sqrt{dim\_head}})v
+\]</span>
+本质是计算了加权后的v，加权的本质是考虑了序列前后之间的关系，<span
+class="math inline">\(qk^T\)</span>正是计算了序列前后的关联性。
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.to_out(out)<br></code></pre></td></tr></table></figure> 最后，self.to_out映射到[batch-size, num_patches+1,
+dim]上。这样，一个attention块之旅就结束了，下面是前馈网络。</p>
+<h4 id="feedforward">FeedForward</h4>
+<p>代码很简单，就只是经过以下一个序列： <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-variable language_">self</span>.net=nn.Sequential(<br>    nn.LayerNorm(dim),<br>    nn.Linear(dim, hidden_dim),<br>    nn.GELU(),<br>    nn.Dropout(dropout),<br>    nn.Linear(hidden_dim, dim),<br>    nn.Dropout(dropout)<br>    )<br></code></pre></td></tr></table></figure>
+注意一下经过的是GELU激活函数，据说是在大模型里效果比较好，这里本质上对形状没有调整，这里的hidden_dim就是前面的参数mlp_dim。
+至此，前馈结束，其运算结果再次进入Attention块不断重复。</p>
+<h4 id="回到vit">回到ViT</h4>
+<p>这里，结束了<code>x = self.transformer(x)</code>，继续ViT类中的forward函数。
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">    x= x.mean(dim= <span class="hljs-number">1</span> ) <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.pool== <span class="hljs-string">&#x27;mean&#x27;</span> <span class="hljs-keyword">else</span> x[:, <span class="hljs-number">0</span> ]<br>    x= <span class="hljs-variable language_">self</span>.to_latent(x)<br><span class="hljs-keyword">return</span> <span class="hljs-variable language_">self</span>.mlp_head(x)<br></code></pre></td></tr></table></figure>
+在第一个维度(num_patches+1)上进行均值(mean情况下)，否则，只取num_patches+1维度的第一个变量(tokens)，即只使用cls_token作为分类结果。不论何种方式，其均形成[batch-size,
+dim]的张量。to_latent什么都不干，mlp_head将dim映射到num_classes上，展示最终分类结果。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="../../../../categories/Computer-vision/" class="category-chain-item">Computer vision</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="../../../../tags/%E5%8E%9F%E5%88%9B/" class="print-no-link">#原创</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Vision Transformer学习笔记</div>
+      <div>http://example.com/2024/10/01/Transformer学习笔记/</div>
+    </div>
+    <div class="license-meta">
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年10月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="../../../../js/events.js" ></script>
+<script  src="../../../../js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="../../../../js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="../../../../js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="../../../../js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
