@@ -27,7 +27,7 @@
 <meta property="og:description" content="前言 本文基于人机共驾型智能汽车的共享控制方法研究进行学习分析，虽然文章中存在一些错误(Ac不可逆却使用其逆进行离散化等)，但是对模型的整体的推导并无大碍。为了和学长学姐的已有框架一致，对文章中的模型做了一些调整与简化(调整了状态量的选择，删去曲率约束)。 模型推导与建立 文章使用道路坐标下的车辆线性二自由度动力学模型，具体如下图：  a是车辆质心距前轴距离、b是车辆质心距后轴距离。在车辆">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-10-02T09:22:28.000Z">
-<meta property="article:modified_time" content="2024-10-07T07:46:34.770Z">
+<meta property="article:modified_time" content="2024-10-08T08:58:51.821Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="MPC">
 <meta property="article:tag" content="控制">
@@ -325,8 +325,8 @@ class="math inline">\(\delta\)</span>恒为0。所以根据后轮侧偏角的定
 2aF_{yf}\cos{\delta}-2bF_{yr}=I_z\dot{w}
 \]</span> 式中，<span class="math inline">\(m\)</span>为车身质量、<span
 class="math inline">\(I_z\)</span>为车身转动惯量。由于自行车模型将左右车轮进行了集中等效处理，因此车辆前后两端所受侧向力为相应轮胎侧偏力的两倍。这两个等式对着示意图看还是很清楚的，均是对质心列写的方程。</p>
-<h2 id="小角度假设">小角度假设</h2>
-<h4 id="车辆前轮转向角delta在小范围内delta5变化">车辆前轮转向角<span
+<h4
+id="小角度假设车辆前轮转向角delta在小范围内delta5变化">小角度假设：车辆前轮转向角<span
 class="math inline">\(\delta\)</span>在小范围内（<span
 class="math inline">\(\delta\)</span>&lt;5°）变化</h4>
 <p>一般在平缓道路进行车道保持时，前轮转角的小角度假设都是成立的。在该假设下，有:
@@ -343,8 +343,9 @@ class="math inline">\(\alpha_r\)</span>同样在小角度范围内变化。此�
 class="math inline">\(F_{yf} =C_f\alpha_f\)</span>、<span
 class="math inline">\(F_{yr} = C_r\alpha_r\)</span>，其中<span
 class="math inline">\(C_f\)</span>和<span
-class="math inline">\(C_r\)</span>分别表示前后轮侧偏刚度。将这些式子代入前面的动力学微分方程，并代入u=is，可得：
-<span class="math display">\[
+class="math inline">\(C_r\)</span>分别表示前后轮侧偏刚度。将这些式子代入前面的动力学微分方程，并代入<span
+class="math inline">\(u=i_s\delta\)</span>，可得： <span
+class="math display">\[
 \begin{cases}
 \dot{v}=-\frac{2(C_f+C_r)}{MV}v-[\frac{2(aC_f-bC_r)}{mV}
 +V]\omega+\frac{2C_f}{i_sm}u\\\\
