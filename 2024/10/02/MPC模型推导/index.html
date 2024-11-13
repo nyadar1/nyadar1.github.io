@@ -19,16 +19,16 @@
   <meta name="author" content="John Doe">
   <meta name="keywords" content="">
   
-    <meta name="description" content="前言 本文基于人机共驾型智能汽车的共享控制方法研究进行学习分析，虽然文章中存在一些错误(Ac不可逆却使用其逆进行离散化等)，但是对模型的整体的推导并无大碍。为了和学长学姐的已有框架一致，对文章中的模型做了一些调整与简化(调整了状态量的选择，删去曲率约束)。 模型推导与建立 文章使用道路坐标下的车辆线性二自由度动力学模型，具体如下图：  a是车辆质心距前轴距离、b是车辆质心距后轴距离。在车辆">
+    <meta name="description" content="前言 本文基于人机共驾型智能汽车的共享控制方法研究进行学习分析，虽然文章中存在一些错误(Ac不可逆却使用其逆进行离散化等)，但是对模型的整体的推导并无大碍。为了和学长学姐的已有框架一致，对文章中的模型做了一些调整与简化(调整了状态量的选择，删去曲率约束，暂定了汽车纵向速度为恒定值)。 模型推导与建立 文章使用道路坐标下的车辆线性二自由度动力学模型，具体如下图：  a是车辆质心距前轴距离、b">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MPC模型推导">
 <meta property="og:url" content="http://example.com/2024/10/02/MPC%E6%A8%A1%E5%9E%8B%E6%8E%A8%E5%AF%BC/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="前言 本文基于人机共驾型智能汽车的共享控制方法研究进行学习分析，虽然文章中存在一些错误(Ac不可逆却使用其逆进行离散化等)，但是对模型的整体的推导并无大碍。为了和学长学姐的已有框架一致，对文章中的模型做了一些调整与简化(调整了状态量的选择，删去曲率约束)。 模型推导与建立 文章使用道路坐标下的车辆线性二自由度动力学模型，具体如下图：  a是车辆质心距前轴距离、b是车辆质心距后轴距离。在车辆">
+<meta property="og:description" content="前言 本文基于人机共驾型智能汽车的共享控制方法研究进行学习分析，虽然文章中存在一些错误(Ac不可逆却使用其逆进行离散化等)，但是对模型的整体的推导并无大碍。为了和学长学姐的已有框架一致，对文章中的模型做了一些调整与简化(调整了状态量的选择，删去曲率约束，暂定了汽车纵向速度为恒定值)。 模型推导与建立 文章使用道路坐标下的车辆线性二自由度动力学模型，具体如下图：  a是车辆质心距前轴距离、b">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/2024/10/02/MPC%E6%A8%A1%E5%9E%8B%E6%8E%A8%E5%AF%BC/car_model.jpg">
 <meta property="article:published_time" content="2024-10-02T09:22:28.000Z">
-<meta property="article:modified_time" content="2024-10-08T14:59:03.567Z">
+<meta property="article:modified_time" content="2024-11-13T12:55:33.461Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="MPC">
 <meta property="article:tag" content="控制">
@@ -226,7 +226,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2k 字
+          2.3k 字
         
       </span>
     
@@ -237,7 +237,7 @@
         
         
         
-          18 分钟
+          20 分钟
         
       </span>
     
@@ -285,7 +285,7 @@
                 
                 <h1 id="前言">前言</h1>
 <p>本文基于<a
-target="_blank" rel="noopener" href="https://www.doc88.com/p-54287015838598.html">人机共驾型智能汽车的共享控制方法研究</a>进行学习分析，虽然文章中存在一些错误(Ac不可逆却使用其逆进行离散化等)，但是对模型的整体的推导并无大碍。为了和学长学姐的已有框架一致，对文章中的模型做了一些调整与简化(调整了状态量的选择，删去曲率约束)。</p>
+target="_blank" rel="noopener" href="https://www.doc88.com/p-54287015838598.html">人机共驾型智能汽车的共享控制方法研究</a>进行学习分析，虽然文章中存在一些错误(Ac不可逆却使用其逆进行离散化等)，但是对模型的整体的推导并无大碍。为了和学长学姐的已有框架一致，对文章中的模型做了一些调整与简化(调整了状态量的选择，删去曲率约束，暂定了汽车纵向速度为恒定值)。</p>
 <h1 id="模型推导与建立">模型推导与建立</h1>
 <p>文章使用道路坐标下的车辆线性二自由度动力学模型，具体如下图： <img
 src="model.png" srcset="/img/loading.gif" lazyload alt="二自由度车辆动力学模型" />
@@ -299,7 +299,7 @@ class="math inline">\(\delta = u/i_s\)</span>，其中<span
 class="math inline">\(i_s\)</span>为转向比。</p>
 <p>定义车辆的状态量为<span class="math inline">\(x=[v, \omega, y,
 psi]\)</span>，v时车辆质心处的纵向速度，<span
-class="math inline">\(\omega\)</span>是质心处的角速度，y为世界坐标系下y方向的距离，psi是车辆坐标系x轴与世界坐标系x轴的夹角。</p>
+class="math inline">\(\omega\)</span>是质心处的角速度，y为汽车坐标系下y方向的距离，psi是车辆坐标系x轴与世界坐标系x轴的夹角。</p>
 <p>根据平面刚体运动理论，车辆质心的横向加速度<span
 class="math inline">\(a_y\)</span>可以表示为： <span
 class="math display">\[
@@ -357,8 +357,15 @@ class="math display">\[
 % \notag 取消编号
 \end{cases}
 \]</span> 考虑到车辆状态<span class="math inline">\(x=[v, \omega, y,
-psi]\)</span>，可将其表达为如下线性定常形式： <span
-class="math display">\[
+psi]\)</span>，可将其表达为如下线性定常形式：</p>
+<p>但目前这里有一个问题，线性方程需要<span
+class="math inline">\(\dot{x}\)</span>与<span
+class="math inline">\(x\)</span>之间的关系，<span
+class="math inline">\(\dot{v},\dot{\omega}\)</span>已经求解出来了，若y是世界坐标系下的纵坐标，则<span
+class="math inline">\(\dot{y}=v\cos{psi}+V\sin{psi}\)</span>。<span
+class="math inline">\(psi\)</span>无法被认为是小角度，这一步我没有想到什么好的线性化方式。因此，这里使用汽车坐标系下的y进行计算。</p>
+<p>这里还需要强调一下，所谓汽车坐标系下的y，是指在每一次进行MPC的时域预测开始时，y值为0，以当前汽车坐标系计算当前的参考位置。在下一步，汽车按初始速度前进了一段，汽车坐标系也因此发生了变化，这一步的参考位置需要按照新的汽车坐标系进行计算。(这里已经很像与参考位置的距离误差了)。</p>
+<p>具体的，模型为： <span class="math display">\[
 \dot{x}=A_cx+B_cu
 \]</span> 其中 <span class="math display">\[A_c=\begin{bmatrix}
 \frac{-2(C_f+C_r)}{MV}&amp;\frac{-2(aC_f-bC_r)}{mV} -V&amp;0&amp;0\\
